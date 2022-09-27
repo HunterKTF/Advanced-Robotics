@@ -1,18 +1,23 @@
 import game
-import getopt, sys
+import argparse
 from colors import *
 
 # Object for Ackermann simulator
 car = game.Ackermann()
 
-# Argument list initialize
-argumentList = sys.argv[1:]
+# Create input argument for user input
+parser = argparse.ArgumentParser(description='Add simulator parameters')
+parser.add_argument("--vehicle_speed", help="Max vehicle speed in sim")
+parser.add_argument("--lf", help="Distance from vehicle's center of mass to front wheel axle")
+parser.add_argument("--lb", help="Distance from vehicle's center of mass to rear wheel axle")
+parser.add_argument("--x0", help="Starting position in x axis")
+parser.add_argument("--y0", help="Starting position in y axis")
+parser.add_argument("--phi0", help="Starting angle (should be 0)")
+parser.add_argument("--df0", help="Speed increments")
+parser.add_argument("--dt", help="Sampling time steps")
 
-# Options
-options = "hmo:"
-
-# Long options
-long_options = ["vehicle_speed", "lf", "lb", "x0", "y0", "phi0", "df0", "dt"]
+args = parser.parse_args()
+print(args)
 
 # Initialize main variables
 car.tick  = 120  # Ticks to 60 fps
