@@ -13,38 +13,36 @@ import numpy as np
 # Create a class for the transformation matrix generation
 class Transform:
     def __init__(self):
-        self.alpha = 0              # yaw angle
-        self.beta = 0               # pitch angle
-        self.gamma = 0              # roll angle
+        self.alpha = 0                  # yaw angle
+        self.beta = 0                   # pitch angle
+        self.gamma = 0                  # roll angle
         
-        self.tx = 0                 # translation in x
-        self.ty = 0                 # translation in y
-        self.tz = 0                 # translation in z
+        self.tx = 0                     # translation in x
+        self.ty = 0                     # translation in y
+        self.tz = 0                     # translation in z
         
-        self.yaw = np.array([])     # empty rotational matrix for yaw movement
-        self.pitch = np.array([])   # empty rotational matrix for pitch movement
-        self.roll = np.array([])    # empty rotational matrix for roll movement
+        self.yaw = np.array([])         # empty rotational matrix for yaw movement
+        self.pitch = np.array([])       # empty rotational matrix for pitch movement
+        self.roll = np.array([])        # empty rotational matrix for roll movement
         
-        self.R = np.array([])       # empty 3D rotational matrix
-        self.t = np.array([])       # empty translation vector
+        self.R = np.array([])           # empty 3D rotational matrix
+        self.t = np.array([])           # empty translation vector
         
-        self.T_LG = np.array([])    # empty transformation matrix
-        self.p_L = []               # empty position list
-        self.p_G_h = np.array([])   # empty GPS homogeneous position array
-        self.p_g = np.array([])     # empty GPS position array
+        self.T_LG = np.array([])        # empty transformation matrix
+        self.p_L = []                   # empty position list
+        self.p_L_homogeneous = None     # variable to store the
+        self.p_G_h = np.array([])       # empty GPS homogeneous position array
+        self.p_g = np.array([])         # empty GPS position array
     
     # Computing the transformation matrix to obtain the result
     def compute_transformation(self):
-        # Compute the position of object regarding the LiDAR sensor
-        p_L = np.array([[self.p_L[0]],
-                        [self.p_L[1]],
-                        [self.p_L[2]]])
-        p_L = np.append(p_L, [[1]], axis=0)
         
         # Compute the global position of GPS using the transformation matrix
-        self.p_G_h = self.T_LG.dot(p_L)
+        self.p_G_h = self.T_LG.dot(self.p_L_homogeneous)
+        print("P_gps_homogeneous: \n", self.p_G_h)
+        
         self.p_g = self.p_G_h[0:3]
-        print(self.p_g)
+        print("P_gps: \n", self.p_g)
     
     # This function returns the 3D rotation matrix R
     def compute_3d_rotation(self):
@@ -70,17 +68,30 @@ class Transform:
         # Compute the 3D rotational matrix of the system
         temp = np.matmul(self.yaw, self.pitch)
         self.R = np.matmul(temp, self.roll)
-        print(self.R)
+        print("3D rotation matrix: \n", self.R)
     
     # This function returns the 3D translation vector t.
     def compute_3d_translation(self):
         # Create the translation array using the coordinates of t
         self.t = np.array([[self.tx], [self.ty], [self.tz]])
-        print(self.t)
+        print("Translation vector: \n", self.t)
     
     # This function returns the 3D transformation matrix T_LG that will be applied to p_L
     def compute_3d_transformation_matrix(self):
         # Create the transformation matrix using the rotational matrix and translation vector
         temp_matrix = np.append(self.R, self.t, axis=1)
         self.T_LG = np.append(temp_matrix, [[0, 0, 0, 1]], axis=0)  # Append the scaling vector
-        print(self.T_LG)
+        print("3D translation matrix: \n", self.T_LG)
+        
+    # This function shows the P_Lidar homogeneous coordinates
+    def show_coord(self):
+        # Compute the position of object regarding the LiDAR sensor
+        self.p_L_homogeneous = np.array([[self.p_L[0]],
+                                         [self.p_L[1]],
+                                         [self.p_L[2]]])
+        
+        print("PL: \n", self.p_L_homogeneous)
+        
+        self.p_L_homogeneous = np.append(self.p_L_homogeneous, [[1]], axis=0)
+        print("P_lidar homogeneous coordinate: \n", self.p_L_homogeneous)
+        
