@@ -1,4 +1,4 @@
-""" stereo.py
+""" 3d_point.py
 
 Description:
 
@@ -8,8 +8,10 @@ First created:
 
 """
 
+# Import standard libraries
 import argparse
 
+# Import local libraries
 import cv_stereo
 
 
@@ -19,19 +21,19 @@ parser.add_argument("--input_image",
                     help="Input image from which the 3D measurements will be obtained")
 args = parser.parse_args()
 
-stereo = cv_stereo.Stereo()
+camera = cv_stereo.Stereo()
 
-stereo.calibration_info["f"] = 500      # Focal length in pixels
-stereo.calibration_info["cx"] = 450     # Center in pixels
-stereo.calibration_info["cy"] = 450     # Center in pixels
-stereo.calibration_info["Z"] = 2        # Distance in meters
+camera.calibration_info["f"] = 500      # Focal length in pixels
+camera.calibration_info["cx"] = 450     # Center in pixels
+camera.calibration_info["cy"] = 450     # Center in pixels
+camera.calibration_info["Z"] = 2        # Distance in meters
 
-stereo.set_image(args.input_image)
+camera.set_image(args.input_image)
 
-stereo.show_image()
+camera.show_image()
 
-stereo.mouse_callback()
+camera.mouse_callback()
 
-stereo.key_wait()
+camera.key_wait()
 
-stereo.destroy_windows()
+camera.destroy_windows()
