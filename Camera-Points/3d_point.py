@@ -26,10 +26,10 @@ args = parser.parse_args()
 
 camera = cv_stereo.Stereo()             # Create stereo camera object
 
-camera.calibration_info["f"] = 500      # Focal length in pixels
-camera.calibration_info["cx"] = 450     # Center in pixels
-camera.calibration_info["cy"] = 450     # Center in pixels
-camera.calibration_info["Z"] = 2        # Distance in meters
+camera.calibration_info["f"] = 1000     # Focal length in pixels
+camera.calibration_info["cx"] = 512     # Center in pixels
+camera.calibration_info["cy"] = 512     # Center in pixels
+camera.calibration_info["Z"] = 0.30     # Distance in meters
 
 camera.set_image(args.input_image)      # Set the image chose by the user
 

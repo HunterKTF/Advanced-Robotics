@@ -38,6 +38,10 @@ class Stereo:
         Z = self.calibration_info["Z"]
         X = Z * (x - self.calibration_info["cx"]) / self.calibration_info["f"]
         Y = Z * (y - self.calibration_info["cy"]) / self.calibration_info["f"]
+        
+        Z = round(Z, 3)
+        X = round(X, 3)
+        Y = round(Y, 3)
 
         print(f"Point {self.line_counter} \t X: {X} \t Y:{Y} \t Z:{Z}")
         return X, Y
