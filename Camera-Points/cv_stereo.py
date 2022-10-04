@@ -1,36 +1,39 @@
 """ cv_stereo.py
 
-Description:
+Description: 3D point mapping library for uncalibrated RGB cameras
 
-Author:
-Contact:
-First created:
+Author: Jorge R. Hernández Sabino
+Contact: jorge.hernandezs@udem.edu
+First created: 26 / 09 / 2022
 
 """
 
+# Import stsandard libraries
 import cv2
 import math
 
 
 class Stereo:
     def __init__(self):
-        self.line_counter = 0
-        self.segment_count = {}
-        self.prev_x = 0
-        self.prev_y = 0
+        self.line_counter = 0       # Counts lines in map
+        self.segment_count = {}     # Stores segment info
+        self.prev_x = 0             # Stores previous x coordinates
+        self.prev_y = 0             # Stores previous y coordinates
 
-        self.X0 = 0
-        self.Y0 = 0
-        self.X1 = 0
-        self.Y1 = 0
-        self.perimeter = 0
+        self.X0 = 0                 # Saves X distance coordinate of previous point
+        self.Y0 = 0                 # Saves Y distance coordinate of previous point
+        self.X1 = 0                 # Saves current X distance
+        self.Y1 = 0                 # Saves current Y distance
+        self.perimeter = 0          # Saves calculated perimeter
 
-        self.calibration_info = {}
-        self.img = None
+        self.calibration_info = {}  # Saves camera calibration info
+        self.img = None             # Stores image object
 
+    # Function to set image object to the desired image
     def set_image(self, input_image):
         self.img = cv2.imread(input_image, cv2.IMREAD_COLOR)
 
+    # Function to compute X Y Z distance
     def compute_XYZ(self, x, y):
         Z = self.calibration_info["Z"]
         X = Z * (x - self.calibration_info["cx"]) / self.calibration_info["f"]
@@ -39,9 +42,11 @@ class Stereo:
         print(f"Point {self.line_counter} \t X: {X} \t Y:{Y} \t Z:{Z}")
         return X, Y
 
+    # Function to draw a line using coordinates on image
     def draw_line(self, x, y):
         cv2.line(self.img, (self.prev_x, self.prev_y), (x, y), (0, 0, 255), 5)
 
+    # Function to detect event and make 
     def click_event(self, event, x, y, flags, params):
         # Check for left mouse clicks
         if event == cv2.EVENT_LBUTTONDOWN:
