@@ -36,7 +36,9 @@ class Ackermann:
         self.tick = 0  # Game tick fps
         
         self.my_triangle = ()  # Moving object
-        self.car = None
+        self.car = None  # Car object
+        self.w = 0  # Car image width
+        self.h = 0  # Car image height
         self.trail = []  # Trail left by moving object
         self.starting_pos = []  # Saves starting position of the car
         
@@ -85,8 +87,14 @@ class Ackermann:
                              (coord[0] + 11, coord[1]))
         
         self.my_triangle = self.starting_pos
+
+        # Set the size for the image
+        DEFAULT_IMAGE_SIZE = (40, 40)
         
-        self.car = pygame.image.load('8_bit_racer.png')
+        self.car = pygame.image.load('racer.png')
+        self.car = pygame.transform.scale(self.car, DEFAULT_IMAGE_SIZE)
+
+        self.w, self.h = self.car.get_size()
         
         # Initializes trail in starting position
         self.trail = [coord]  # Object's trail
@@ -154,11 +162,40 @@ class Ackermann:
         
         render = self.coord_text.render(coord_string, True, RED)
         self.screen.blit(render, [self.my_triangle[0][0] - 100, self.my_triangle[0][1] - 32])
+
+    # Function to rotate image
+    @staticmethod
+    def blitRotate(self, image, pos, originPos, angle):
+    
+        # offset from pivot to center
+        image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
+        offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
+    
+        # Rotated offset from pivot to center
+        rotated_offset = offset_center_to_pivot.rotate(-angle)
+    
+        # Rotted image center
+        rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
+    
+        # get a rotated image
+        rotated_image = pygame.transform.rotate(image, angle)
+        rotated_image_rect = rotated_image.get_rect(center=rotated_image_center)
+    
+        # rotate and blit the image
+        # self.screen.blit(rotated_image, rotated_image_rect)
+        self.screen.blit(rotated_image, (self.x + self.x0 - self.w/2, self.y + self.y0 - self.h/2))
     
     # Render object on screen
     def draw_object(self):
-        pygame.draw.polygon(self.screen, YELLOW, self.my_triangle)
-        self.screen.blit(self.car, (self.x, self.y))
+        # pygame.draw.polygon(self.screen, YELLOW, self.my_triangle)
+        
+        screen = self.screen
+        image = self.car
+        originPos = (self.w/2, self.h/2)
+        pos = (screen.get_width()/2, screen.get_height()/2)
+        angle = -math.degrees(self.phi)
+        
+        self.blitRotate(self, image, pos, originPos, angle)
     
     # Controller value mapping
     @staticmethod
@@ -210,7 +247,7 @@ class Ackermann:
         if math.degrees(self.phi) <= -360:
             self.phi = math.radians(0)
         
-        print(math.degrees(self.beta), math.degrees(self.phi), self.x, self.y)
+        # print(math.degrees(self.beta), math.degrees(self.phi), self.x, self.y)
         
         self.my_triangle = ((self.starting_pos[0][0] + self.x, self.starting_pos[0][1] + self.y),
                             (self.starting_pos[1][0] + self.x, self.starting_pos[1][1] + self.y),

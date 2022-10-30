@@ -21,7 +21,7 @@ print(args)
 
 # Initialize main variables
 car.tick = 120  # Ticks to 60 fps
-car.step = 6  # Max degree of turning (3 left and 3 right)
+car.step = 4  # Max degree of turning (2 left and 2 right)
 car.dT = 0.1  # Sampling time of 0.1
 car.speed = 10  # Vehicle speed in m/s
 car.l_b = 1.2  # Distance from vehicle's center of mass to rear wheel axle
