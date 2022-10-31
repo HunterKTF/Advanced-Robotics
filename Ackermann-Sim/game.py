@@ -89,9 +89,9 @@ class Ackermann:
         self.my_triangle = self.starting_pos
 
         # Set the size for the image
-        DEFAULT_IMAGE_SIZE = (40, 40)
+        DEFAULT_IMAGE_SIZE = (40, 20)
         
-        self.car = pygame.image.load('racer.png')
+        self.car = pygame.image.load('noise-free.png')
         self.car = pygame.transform.scale(self.car, DEFAULT_IMAGE_SIZE)
 
         self.w, self.h = self.car.get_size()
@@ -120,8 +120,8 @@ class Ackermann:
     
     # Drawing trail of the main object
     def tracing(self):
-        if [self.my_triangle[0][0], self.my_triangle[0][1] - 7] not in self.trail:
-            self.trail.append([self.my_triangle[0][0], self.my_triangle[0][1] - 7])
+        if [self.x + self.x0, self.y + self.y0] not in self.trail:
+            self.trail.append([self.x + self.x0, self.y + self.y0])
         
         for n in self.trail:
             pygame.draw.rect(self.screen, GREEN, [n[0], n[1], 5, 5])

@@ -7,7 +7,7 @@ car = game.Ackermann()
 
 # Create input argument for user input
 parser = argparse.ArgumentParser(description='Add simulator parameters')
-parser.add_argument("--vehicle_speed", help="Max vehicle speed in sim")
+parser.add_argument("--vehicle_speed", help="Max vehicle speed in sim", nargs='?', const=10, type=int)
 parser.add_argument("--lf", help="Distance from vehicle's center of mass to front wheel axle")
 parser.add_argument("--lb", help="Distance from vehicle's center of mass to rear wheel axle")
 parser.add_argument("--x0", help="Starting position in x axis")
@@ -20,16 +20,16 @@ args = parser.parse_args()
 print(args)
 
 # Initialize main variables
-car.tick = 120  # Ticks to 60 fps
+car.tick = 120  # Ticks to 120 fps
 car.step = 4  # Max degree of turning (2 left and 2 right)
-car.dT = 0.1  # Sampling time of 0.1
-car.speed = 10  # Vehicle speed in m/s
-car.l_b = 1.2  # Distance from vehicle's center of mass to rear wheel axle
-car.l_f = 1.4  # Distance from vehicle's center of mass to front wheel axle
-car.x0 = car.size[0] / 2  # Starts in the middle of the x axis
-car.y0 = car.size[1] / 2  # Starts in the middle of the y axis
-car.phi = 0
-car.df = 0
+car.dT = 0.1 if args.dt is None else args.dt  # Sampling time of 0.1
+car.speed = 10 if args.vehicle_speed is None else args.vehicle_speed  # Vehicle speed in m/s
+car.l_b = 1.2 if args.lb is None else args.lb  # Distance from vehicle's center of mass to rear wheel axle
+car.l_f = 1.4 if args.lf is None else args.lf  # Distance from vehicle's center of mass to front wheel axle
+car.x0 = car.size[0]/2 if args.x0 is None else args.x0  # car.size[0] / 2,  Starts in the middle of the x axis
+car.y0 = car.size[1]/2 if args.y0 is None else args.y0  # car.size[1] / 2,  Starts in the middle of the y axis
+car.phi = 0 if args.phi0 is None else args.phi0
+car.df = 0 if args.df0 is None else args.df0
 
 # Initialize simulation parameters
 car.init_sim_params()
