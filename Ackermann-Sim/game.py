@@ -1,6 +1,6 @@
 """
     Ackermann Simulator
-    Made by: Jorge Ricardo Hernández Sabino
+    Made by: Jorge Ricardo Hernandez Sabino
     Revision date: 05/09/2022
 """
 
@@ -8,6 +8,7 @@
 import pygame
 import math
 import sys
+import numpy
 
 from colors import *
 from pygame.locals import *
@@ -17,10 +18,15 @@ class Ackermann:
     def __init__(self):
         self.beta = 0  # slip angle of vehicle center of mass
         self.x = 0  # coordinate of vehicle along 'x' axis
+        self.prev_x = 0
+        self.x_err = 0
         self.x0 = 0  # starting coordinate in 'x' axis
         self.y = 0  # coordinate of vehicle along 'y' axis
+        self.prev_y = 0
+        self.y_err = 0
         self.y0 = 0  # starting coordinate in 'y' axis
         self.phi = 0  # instantiates the global heading angle
+        self.phi_err = 0
         self.df = 0  # rotation angle of the front wheel bicycle
         self.l_f = 0  # distance from vehicle's center of mass to front wheel axle
         self.l_b = 0  # distance from vehicle's center of mass to rear wheel axle
@@ -34,12 +40,19 @@ class Ackermann:
         self.screen = None  # Pygame screen
         self.clock = None  # Pygame clock
         self.tick = 0  # Game tick fps
-        
-        self.my_triangle = ()  # Moving object
-        self.car = None  # Car object
+
+        self.noise_free_car = None  # Car object
+        self.noise_car = None
         self.w = 0  # Car image width
+        self.w_err = 0
         self.h = 0  # Car image height
+        self.h_err = 0
         self.trail = []  # Trail left by moving object
+        self.trail_err = []
+        self.sigma_err = 0.15
+        self.rand = numpy.random.normal
+        self.obj_center = (0, 0)
+        self.obj_center_err = (0, 0)
         self.starting_pos = []  # Saves starting position of the car
         
         self.param_text = None  # Saves parameters font
@@ -80,24 +93,26 @@ class Ackermann:
     # Initiates object and trail
     def init_object(self):
         # Object's starting position
-        coord = [self.x0, self.y0]  # Starts in center of screen
-        
-        self.starting_pos = ((coord[0], coord[1] + 7),  # Draws triangle in given coord.
-                             (coord[0], coord[1] - 7),
-                             (coord[0] + 11, coord[1]))
-        
-        self.my_triangle = self.starting_pos
+        self.starting_pos = [self.x0, self.y0]  # Starts in center of screen
 
         # Set the size for the image
-        DEFAULT_IMAGE_SIZE = (40, 20)
-        
-        self.car = pygame.image.load('noise-free.png')
-        self.car = pygame.transform.scale(self.car, DEFAULT_IMAGE_SIZE)
+        default_image_size = (40, 20)
 
-        self.w, self.h = self.car.get_size()
+        # Configure noise free car
+        self.noise_free_car = pygame.image.load('noise-free.png')
+        self.noise_free_car = pygame.transform.scale(self.noise_free_car, default_image_size)
+
+        # Configure noise car
+        self.noise_car = pygame.image.load('noise.png')
+        self.noise_car = pygame.transform.scale(self.noise_car, default_image_size)
+
+        # Get noise free and noise car sizes
+        self.w, self.h = self.noise_free_car.get_size()
+        self.w_err, self.h_err = self.noise_car.get_size()
         
         # Initializes trail in starting position
-        self.trail = [coord]  # Object's trail
+        self.trail = [self.starting_pos]  # Object's trail
+        self.trail_err = [self.starting_pos]
     
     # Maps xbox controller limits
     def xbox_controller_mapping(self):
@@ -125,6 +140,14 @@ class Ackermann:
         
         for n in self.trail:
             pygame.draw.rect(self.screen, GREEN, [n[0], n[1], 5, 5])
+
+    # Drawing the error line tracing
+    def error_tracing(self):
+        if [self.x_err + self.x0, self.y_err + self.y0] not in self.trail_err:
+            self.trail_err.append([self.x_err + self.x0, self.y_err + self.y0])
+
+        for n in self.trail_err:
+            pygame.draw.rect(self.screen, ORANGE, [n[0], n[1], 5, 5])
     
     # Render parameters box
     def param_textbox(self):
@@ -161,11 +184,11 @@ class Ackermann:
         coord_string = "(" + x_coord + " m, " + y_coord + " m, " + degrees + " deg)"
         
         render = self.coord_text.render(coord_string, True, RED)
-        self.screen.blit(render, [self.my_triangle[0][0] - 100, self.my_triangle[0][1] - 32])
+        self.screen.blit(render, [self.obj_center[0] - 100, self.obj_center[1] - 32])
 
     # Function to rotate image
     @staticmethod
-    def blitRotate(self, image, pos, originPos, angle):
+    def blit_rotate(self, image, pos, originPos, angle, w, h, obj_center):
     
         # offset from pivot to center
         image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
@@ -183,19 +206,23 @@ class Ackermann:
     
         # rotate and blit the image
         # self.screen.blit(rotated_image, rotated_image_rect)
-        self.screen.blit(rotated_image, (self.x + self.x0 - self.w/2, self.y + self.y0 - self.h/2))
+        self.screen.blit(rotated_image, (obj_center[0] - w/2, obj_center[1] - h/2))
     
     # Render object on screen
     def draw_object(self):
-        # pygame.draw.polygon(self.screen, YELLOW, self.my_triangle)
-        
-        screen = self.screen
-        image = self.car
-        originPos = (self.w/2, self.h/2)
-        pos = (screen.get_width()/2, screen.get_height()/2)
+        origin_pos = (self.w/2, self.h/2)
+        pos = (self.screen.get_width()/2, self.screen.get_height()/2)
         angle = -math.degrees(self.phi)
         
-        self.blitRotate(self, image, pos, originPos, angle)
+        self.blit_rotate(self, self.noise_free_car, pos, origin_pos, angle, self.w, self.h, self.obj_center)
+
+    # Draw object with error on screen
+    def draw_object_error(self):
+        origin_pos = (self.w_err / 2, self.h_err / 2)
+        pos = (self.screen.get_width() / 2, self.screen.get_height() / 2)
+        angle = -math.degrees(self.phi_err)
+
+        self.blit_rotate(self, self.noise_car, pos, origin_pos, angle, self.w_err, self.h_err, self.obj_center_err)
     
     # Controller value mapping
     @staticmethod
@@ -219,21 +246,21 @@ class Ackermann:
             
             if event.type == JOYBUTTONDOWN:  # XBox controller buttons
                 if event.button == 0:  # A Button
-                    self.my_triangle = (self.size[0] / 2, self.size[1] / 2,
-                                        self.size[0] / 2, self.size[1] / 2,
-                                        self.size[0] / 2, self.size[1] / 2)
+                    print("Pressed A button")
             
             if event.type == JOYAXISMOTION:  # XBox Controller axis
                 if event.axis == 5:  # Speed up
                     self.v = int(
-                        self.mapping(self.left_max_T, self.left_min_T, self.right_max_T, self.right_min_T, event.value))
+                        self.mapping(self.left_max_T, self.left_min_T,
+                                     self.right_max_T, self.right_min_T, event.value))
                 if event.axis == 4:  # Speed down
                     speed = int(
-                        self.mapping(self.left_max_T, self.left_min_T, self.right_max_T, self.right_min_T, event.value))
+                        self.mapping(self.left_max_T, self.left_min_T,
+                                     self.right_max_T, self.right_min_T, event.value))
                     self.v = -speed
                 if event.axis == 0:  # Steering
-                    self.df = self.mapping(self.left_max_J, self.left_min_J, self.right_max_J, self.right_min_J,
-                                           event.value)
+                    self.df = self.mapping(self.left_max_J, self.left_min_J,
+                                           self.right_max_J, self.right_min_J, event.value)
     
     # Sets moving parameters
     def move_object(self):
@@ -241,17 +268,37 @@ class Ackermann:
         self.phi += self.v * self.dT * (math.cos(self.beta) * math.tan(self.df) / (self.l_f + self.l_b))
         self.x += self.v * self.dT * math.cos(self.phi + self.beta)
         self.y += self.v * self.dT * math.sin(self.phi + self.beta)
-        
+
+        self.move_object_error()
+
+        self.prev_x = self.x
+        self.prev_y = self.y
+
+        self.obj_center = (self.x + self.x0, self.y + self.y0)
+
         if math.degrees(self.phi) >= 360:
             self.phi = math.radians(0)
         if math.degrees(self.phi) <= -360:
             self.phi = math.radians(0)
         
         # print(math.degrees(self.beta), math.degrees(self.phi), self.x, self.y)
-        
-        self.my_triangle = ((self.starting_pos[0][0] + self.x, self.starting_pos[0][1] + self.y),
-                            (self.starting_pos[1][0] + self.x, self.starting_pos[1][1] + self.y),
-                            (self.starting_pos[2][0] + self.x, self.starting_pos[2][1] + self.y))
+
+    def move_object_error(self):
+        if (self.prev_x != self.x) or (self.prev_y != self.y):
+            beta = math.atan(self.l_b * math.tan(self.df) / (self.l_f + self.l_b))
+
+            self.phi_err += float(self.rand(self.df, self.sigma_err, 1))
+            self.x_err += self.v * self.dT * math.cos(self.phi_err + beta)
+            self.y_err += self.v * self.dT * math.sin(self.phi_err + beta)
+
+            self.obj_center_err = (self.x_err + self.x0, self.y_err + self.y0)
+
+            if math.degrees(self.phi_err) >= 360:
+                self.phi_err = math.radians(0)
+            if math.degrees(self.phi_err) <= -360:
+                self.phi_err = math.radians(0)
+
+        # print(math.degrees(beta), math.degrees(self.phi_err), self.x_err, self.y_err)
     
     # Sets clock timer
     def set_clock_tick(self):

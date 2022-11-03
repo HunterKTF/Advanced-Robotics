@@ -21,7 +21,7 @@ print(args)
 
 # Initialize main variables
 car.tick = 120  # Ticks to 120 fps
-car.step = 4  # Max degree of turning (2 left and 2 right)
+car.step = 2.4  # Max degree of turning (2 left and 2 right)
 car.dT = 0.1 if args.dt is None else args.dt  # Sampling time of 0.1
 car.speed = 10 if args.vehicle_speed is None else args.vehicle_speed  # Vehicle speed in m/s
 car.l_b = 1.2 if args.lb is None else args.lb  # Distance from vehicle's center of mass to rear wheel axle
@@ -53,6 +53,7 @@ while True:
     
     # Draw tracing line
     car.tracing()
+    car.error_tracing()
     
     # Renders parameters textbox
     car.param_textbox()
@@ -62,12 +63,14 @@ while True:
     
     # Draw main object in shape of triangle
     car.draw_object()
+    car.draw_object_error()
     
     # Check for pygame events
     car.check_end_event()
     
     # Move main object
     car.move_object()
+    # car.move_object_error()
     
     # Update display
     car.update()
