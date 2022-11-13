@@ -18,15 +18,15 @@ class Ackermann:
     def __init__(self):
         self.beta = 0  # slip angle of vehicle center of mass
         self.x = 0  # coordinate of vehicle along 'x' axis
-        self.prev_x = 0
-        self.x_err = 0
+        self.prev_x = 0  # previous x coordinate value
+        self.x_err = 0  # x coordinate of noise vehicle
         self.x0 = 0  # starting coordinate in 'x' axis
         self.y = 0  # coordinate of vehicle along 'y' axis
-        self.prev_y = 0
-        self.y_err = 0
+        self.prev_y = 0  # previous y coordinate value
+        self.y_err = 0  # y coordinate of noise vehicle
         self.y0 = 0  # starting coordinate in 'y' axis
         self.phi = 0  # instantiates the global heading angle
-        self.phi_err = 0
+        self.phi_err = 0  # phi angle of noise vehicle
         self.df = 0  # rotation angle of the front wheel bicycle
         self.l_f = 0  # distance from vehicle's center of mass to front wheel axle
         self.l_b = 0  # distance from vehicle's center of mass to rear wheel axle
@@ -44,29 +44,29 @@ class Ackermann:
         self.noise_free_car = None  # Car object
         self.noise_car = None
         self.w = 0  # Car image width
-        self.w_err = 0
+        self.w_err = 0  # noise car image width
         self.h = 0  # Car image height
-        self.h_err = 0
+        self.h_err = 0  # noise car image height
         self.trail = []  # Trail left by moving object
-        self.trail_err = []
-        self.sigma_err = 0.15
-        self.rand = numpy.random.normal
-        self.obj_center = (0, 0)
-        self.obj_center_err = (0, 0)
+        self.trail_err = []  # trail left by moving noise object
+        self.sigma_err = 0.15  # sigma error value
+        self.rand = numpy.random.normal  # normal random distribution function
+        self.obj_center = (0, 0)  # noise-free object center
+        self.obj_center_err = (0, 0)  # noise object center
         self.starting_pos = []  # Saves starting position of the car
         
         self.param_text = None  # Saves parameters font
         self.coord_text = None  # Saves coordinates font
         
-        self.left_max_T = 0
-        self.left_min_T = 0
-        self.right_max_T = 0
-        self.right_min_T = 0
+        self.left_max_T = 0  # normalization value for max left trigger acceleration
+        self.left_min_T = 0  # normalization value for min  left trigger acceleration
+        self.right_max_T = 0  # normalization value for min right trigger acceleration
+        self.right_min_T = 0  # normalization value for max right trigger acceleration
         
-        self.left_max_J = 0
-        self.left_min_J = 0
-        self.right_max_J = 0
-        self.right_min_J = 0
+        self.left_max_J = 0  # normalization value for max left joystick steering
+        self.left_min_J = 0  # normalization value for min left joystick steering
+        self.right_max_J = 0  # normalization value for max right joystick steering
+        self.right_min_J = 0  # normalization value for min right joystick steering
     
     # Initiates game and controllers
     def init_sim_params(self):
@@ -287,7 +287,10 @@ class Ackermann:
         if (self.prev_x != self.x) or (self.prev_y != self.y):
             beta = math.atan(self.l_b * math.tan(self.df) / (self.l_f + self.l_b))
 
-            self.phi_err += float(self.rand(self.df, self.sigma_err, 1))
+            self.sigma_err = self.mapping(self.right_max_J, self.right_min_J, 0.25, 0, self.df)
+            self.sigma_err = math.radians(abs(self.sigma_err))
+            number = float(self.rand(self.df, 0.25, 1))
+            self.phi_err += 9*number/24
             self.x_err += self.v * self.dT * math.cos(self.phi_err + beta)
             self.y_err += self.v * self.dT * math.sin(self.phi_err + beta)
 
