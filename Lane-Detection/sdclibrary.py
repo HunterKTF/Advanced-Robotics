@@ -4,7 +4,7 @@ import cv2
 from time import sleep
 
 
-class Sdclib():
+class Sdclib:
     def __init__(self):
         self.img_color = None
         self.img_path = ""
@@ -153,4 +153,4 @@ class Sdclib():
             img_out = cv2.addWeighted(self.img_lanes, alpha, self.img_color, 1-alpha, 0)
                     
         cv2.imshow('Lane detection', img_out)
-        cv2.waitKey(1)
+        cv2.waitKey(0)
