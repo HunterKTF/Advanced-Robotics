@@ -34,11 +34,11 @@ def pipeline(sdc_img):
     sdc_img.region_of_interest()
     
     # 6. Use Hough Transform to trace lane lines
-    sdc_img.rho = 2
-    sdc_img.theta = np.pi/180
-    sdc_img.threshold = 100
-    sdc_img.min_line_len = 10
-    sdc_img.max_line_gap = 30
+    sdc_img.rho = 2                 # Distance resolution in pixels on Hough grid
+    sdc_img.theta = np.pi/180       # Angular resolution in radians on Hough grid
+    sdc_img.threshold = 100         # Minimum number of intersections on Hough grid
+    sdc_img.min_line_len = 10       # Minimum number of pixels making a line
+    sdc_img.max_line_gap = 30       # Maximum gap in pixels between connectable line segments
     
     sdc_img.hough_function()
     
@@ -46,12 +46,13 @@ def pipeline(sdc_img):
     sdc_img.inlier_lines()
     
     # 8. Draw lines for each lane
-    sdc_img.min_lane_size = 240
-    sdc_img.max_lane_size = 500
+    sdc_img.min_lane_size = 240     # Minimum final lane size
+    sdc_img.max_lane_size = 500     # Maximum final lane size
     
     sdc_img.lane_detect()
 
 
+# Run the main function to execute the pipeline
 def main(dataset_list):
     for img_name in dataset_list:
         # Create lane detection object
@@ -89,4 +90,5 @@ if __name__ == "__main__":
 
         main(dataset)
     except Exception as e:
+        # Prints error message with error arguments
         print(e.message, e.args)
