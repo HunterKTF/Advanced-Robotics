@@ -1,65 +1,35 @@
-import sys
-import folium
-from pyicloud import PyiCloudService
-from secrets import icloud_email, pswd
+# Import standard libraries
+from time import sleep
 
+# Import local libraries
+from geolocation import Location
 
-api = PyiCloudService(icloud_email, pswd)
+# Initialize object Location
+location = Location()
 
-if api.requires_2fa:
-    print("Two-factor authentication required.")
-    code = input("Enter the code you received of one of your approved devices: ")
-    result = api.validate_2fa_code(code)
-    print("Code validation result: %s" % result)
+# Get object API
+location.get_api()
 
-    if not result:
-        print("Failed to verify security code")
-        sys.exit(1)
+# Get cellular information
+location.get_iphone()
+print(location.location)
 
-    if not api.is_trusted_session:
-        print("Session is not trusted. Requesting trust...")
-        result = api.trust_session()
-        print("Session trust result %s" % result)
+# Get location information from cellular
+location.get_location()
 
-        if not result:
-            print("Failed to request trust. You will likely be prompted for the code again in the coming weeks")
-elif api.requires_2sa:
-    import click
-    print("Two-step authentication required. Your trusted devices are:")
+# Initialize local view map
+location.print_map()
 
-    devices = api.trusted_devices
-    for i, device in enumerate(devices):
-        print(
-            "  %s: %s" % (i, device.get('deviceName',
-            "SMS to %s" % device.get('phoneNumber')))
-        )
+while True:
+    # Fetch last location data and update map
+    location.get_location()
+    location.update_map()
 
-    device = click.prompt('Which device would you like to use?', default=0)
-    device = devices[device]
-    if not api.send_verification_code(device):
-        print("Failed to send verification code")
-        sys.exit(1)
+    print(location.latitude, location.longitude)
+    location.ned_coordinates()
 
-    code = click.prompt('Please enter validation code')
-    if not api.validate_verification_code(device, code):
-        print("Failed to verify verification code")
-        sys.exit(1)
+    # Save map to location.html
+    location.save_map()
 
-# print(api.devices)
-
-iphone = api.devices[1]
-
-status = iphone.status()
-location = iphone.location()
-# sound = iphone.play_sound()
-
-print(status)
-print(location)
-
-lat, lon = location["latitude"], location["longitude"]
-print(lat, lon)
-
-myMap = folium.Map(location=[lat, lon], zoom_start=9)
-folium.Marker([lat, lon], popup="Hi").add_to(myMap)
-
-myMap.save("location.html")
+    # Wait 1 second per query
+    sleep(1)
