@@ -16,10 +16,10 @@ while True:
     location.get_iphone()
 
     if c < 1:
+        location.init_location()
+
         # Initialize local view map
         location.print_map()
-
-        location.init_location()
 
     else:
         # Get location information from cellular
@@ -28,8 +28,6 @@ while True:
         location.update_map()
 
     location.ned_coordinates()
-
-    print(location.location)
 
     print("Geodetic coords:", location.lat, location.lon, location.alt, end=" | ")
     print("Travelled distance:", location.dist, end=" | ")

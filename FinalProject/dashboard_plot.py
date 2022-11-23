@@ -1,49 +1,53 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QWidget, QScrollArea, QFrame, QGridLayout, QVBoxLayout, QMainWindow
-from PyQt5.QtCore import Qt, QEvent, QMimeData, QTimer
-from PyQt5.QtGui import QDrag
-from matplotlib.figure import Figure
+import matplotlib
+
+matplotlib.use('Qt5Agg')
+
+from PyQt5 import QtCore, QtWidgets
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
-from pyqtgraph import PlotWidget, plot
-import pyqtgraph as pg
-import os
-from random import randint
+from matplotlib.figure import Figure
 
 
-class MainWindow(QMainWindow):
+class MplCanvas(FigureCanvas):
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+
+class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.graphWidget = pg.PlotWidget()
-        self.setCentralWidget(self.graphWidget)
+        self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
+        self.setCentralWidget(self.canvas)
 
-        self.x = list(range(100))  # 100 time points
-        self.y = [randint(0, 100) for _ in range(100)]  # 100 data points
+        n_data = 50
+        self.xdata = list(range(n_data))
+        self.ydata = [random.randint(0, 10) for i in range(n_data)]
+        self.update_plot()
 
-        self.graphWidget.setBackground('black')
+        self.show()
 
-        pen = pg.mkPen(color=(255, 255, 255))
-        self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)
-
-        self.timer = QTimer()
-        self.timer.setInterval(50)
-        self.timer.timeout.connect(self.update_plot_data)
+        # Setup a timer to trigger the redraw by calling update_plot.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(3000)
+        self.timer.timeout.connect(self.update_plot)
         self.timer.start()
 
-    def update_plot_data(self):
-        self.x = self.x[1:]  # Remove the first y element.
-        self.x.append(self.x[-1] + 1)  # Add a new value 1 higher than the last.
+    def update_plot(self):
+        # Drop off the first y element, append a new one.
+        self.ydata = self.ydata[1:] + [random.randint(0, 10)]
+        self.canvas.axes.cla()  # Clear the canvas.
+        self.canvas.axes.plot(self.xdata, self.ydata, 'r')
+        # Trigger the canvas to update and redraw.
+        self.canvas.draw()
 
-        self.y = self.y[1:]  # Remove the first
-        self.y.append(randint(0, 100))  # Add a new random value.
 
-        self.data_line.setData(self.x, self.y)  # Update the data.
-
-
-app = QApplication(sys.argv)
+app = QtWidgets.QApplication(sys.argv)
 w = MainWindow()
-w.show()
-sys.exit(app.exec_())
+app.exec_()
